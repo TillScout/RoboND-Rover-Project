@@ -28,7 +28,7 @@ def rock_thresh(img, rgb_thresh=(100,100,50)):
     return color_select
 
 # threshing function to detect obstacles
-def obs_thresh(img, rgb_thresh=(120, 100, 100)):
+def obs_thresh(img, rgb_thresh=(120, 120, 120)):
     # Create an array of zeros same xy size as img, but single channel
     color_select = np.zeros_like(img[:,:,0])
     # Require that each pixel be above all three threshold values in RGB
@@ -42,6 +42,11 @@ def obs_thresh(img, rgb_thresh=(120, 100, 100)):
     # Return the binary image
     return color_select
 
+# function to limit the vision of the Rover to only account for the closer and better terrain for navigation purposes
+def restrict_vision(xpix, ypix, radius):
+    limit = np.sqrt(xpix**2 + ypix**2) < radius
+    x_restricted, y_restricted = xpix[limit], ypix[limit]
+    return x_restricted, y_restricted
 
 
 # Define a function to convert to rover-centric coordinates
@@ -140,6 +145,10 @@ def perception_step(Rover):
     x_rover_obs, y_rover_obs = rover_coords(threshed_obs)
     x_rover_nugget, y_rover_nugget = rover_coords(threshed_rock)
     # 6) Convert rover-centric pixel values to world coordinates
+    #restrict the vision of the Rover to map only the closer terrain:
+    x_rover_nav, y_rover_nav = restrict_vision(x_rover_nav, y_rover_nav, 50)
+    x_rover_obs, y_rover_obs = restrict_vision(x_rover_obs, y_rover_obs, 50)
+    # map them to world coordinates    
     x_world_nav, y_world_nav = pix_to_world(x_rover_nav, y_rover_nav, xpos, ypos, yaw, 200, 10)
     x_world_obs, y_world_obs = pix_to_world(x_rover_obs, y_rover_obs, xpos, ypos, yaw, 200, 10)
     x_world_nugget, y_world_nugget = pix_to_world(x_rover_nugget, y_rover_nugget, xpos, ypos, yaw, 200, 10)
